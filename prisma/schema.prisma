@@ -1,0 +1,491 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTHENTICATION & USERS
+// ============================================================
+
+enum UserRole {
+  SUPER_ADMIN
+  FED_ADMIN
+  REGION_ADMIN
+  COACH
+  JUDGE
+  ATHLETE
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  fullName      String    @map("full_name")
+  role          UserRole
+  regionId      String?   @map("region_id")
+  clubId        String?   @map("club_id")
+  memberId      String?   @unique @map("member_id")
+  isActive      Boolean   @default(true) @map("is_active")
+  avatarUrl     String?   @map("avatar_url")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  region        Region?   @relation(fields: [regionId], references: [id])
+  club          Club?     @relation(fields: [clubId], references: [id])
+  member        Member?   @relation(fields: [memberId], references: [id])
+
+  createdMembers    Member[]       @relation("MemberCreatedBy")
+  approvedLicenses  License[]      @relation("LicenseApprovedBy")
+  reviewedDocuments Document[]     @relation("DocumentReviewedBy")
+  submittedRegs     Registration[] @relation("RegistrationSubmittedBy")
+  approvedRegs      Registration[] @relation("RegistrationApprovedBy")
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+// ============================================================
+// ORGANIZATIONS
+// ============================================================
+
+model Region {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  code         String   @unique
+  headName     String?  @map("head_name")
+  contactPhone String?  @map("contact_phone")
+  contactEmail String?  @map("contact_email")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  users        User[]
+  clubs        Club[]
+  members      Member[]
+
+  @@map("regions")
+}
+
+model Club {
+  id           String   @id @default(cuid())
+  name         String
+  regionId     String   @map("region_id")
+  coachName    String?  @map("coach_name")
+  address      String?
+  contactPhone String?  @map("contact_phone")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  region       Region   @relation(fields: [regionId], references: [id])
+  users        User[]
+  members      Member[]
+
+  @@unique([name, regionId])
+  @@map("clubs")
+}
+
+// ============================================================
+// MEMBERS
+// ============================================================
+
+enum MemberType {
+  ATHLETE
+  COACH
+  REFEREE
+  OFFICIAL
+}
+
+enum MemberStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DISQUALIFIED
+  EXPIRED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum BeltRank {
+  GYP_10
+  GYP_9
+  GYP_8
+  GYP_7
+  GYP_6
+  GYP_5
+  GYP_4
+  GYP_3
+  GYP_2
+  GYP_1
+  DAN_1
+  DAN_2
+  DAN_3
+  DAN_4
+  DAN_5
+  DAN_6
+  DAN_7
+  DAN_8
+  DAN_9
+}
+
+model Member {
+  id              String       @id @default(cuid())
+  memberId        String       @unique @map("member_id")
+  fullName        String       @map("full_name")
+  fullNameLatin   String?      @map("full_name_latin")
+  dateOfBirth     DateTime     @map("date_of_birth")
+  gender          Gender
+  memberType      MemberType   @map("member_type")
+  photoUrl        String?      @map("photo_url")
+  regionId        String       @map("region_id")
+  clubId          String?      @map("club_id")
+  coachName       String?      @map("coach_name")
+  beltRank        BeltRank     @map("belt_rank")
+  weightCategory  String?      @map("weight_category")
+  currentWeight   Decimal?     @map("current_weight") @db.Decimal(5, 2)
+  passportNumber  String?      @map("passport_number")
+  phone           String?
+  email           String?
+  status          MemberStatus @default(PENDING)
+  ratingPoints    Int          @default(0) @map("rating_points")
+  isVerified      Boolean      @default(false) @map("is_verified")
+  createdById     String?      @map("created_by_id")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  region          Region       @relation(fields: [regionId], references: [id])
+  club            Club?        @relation(fields: [clubId], references: [id])
+  createdBy       User?        @relation("MemberCreatedBy", fields: [createdById], references: [id])
+  user            User?
+
+  license         License?
+  documents       Document[]
+  registrations   Registration[]
+  matchesAsRed    Match[]        @relation("MatchAthleteRed")
+  matchesAsBlue   Match[]        @relation("MatchAthleteBlue")
+  matchesWon      Match[]        @relation("MatchWinner")
+  medalResults    MedalResult[]
+
+  @@index([regionId])
+  @@index([status])
+  @@index([memberType])
+  @@index([beltRank])
+  @@map("members")
+}
+
+// ============================================================
+// LICENSING
+// ============================================================
+
+enum LicenseType {
+  GAL
+  GCL
+  GOL
+}
+
+enum LicenseStatus {
+  PENDING
+  DOCS_APPROVED
+  APPROVED
+  EXPIRED
+  SUSPENDED
+  REJECTED
+}
+
+model License {
+  id              String        @id @default(cuid())
+  memberId        String        @unique @map("member_id")
+  licenseNumber   String?       @unique @map("license_number")
+  type            LicenseType
+  status          LicenseStatus @default(PENDING)
+  issuedAt        DateTime?     @map("issued_at")
+  expiresAt       DateTime?     @map("expires_at")
+  approvedById    String?       @map("approved_by_id")
+  rejectionReason String?       @map("rejection_reason")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  member          Member        @relation(fields: [memberId], references: [id])
+  approvedBy      User?         @relation("LicenseApprovedBy", fields: [approvedById], references: [id])
+
+  @@index([status])
+  @@map("licenses")
+}
+
+// ============================================================
+// DOCUMENTS
+// ============================================================
+
+enum DocumentType {
+  PHOTO
+  PASSPORT
+  BIRTH_CERTIFICATE
+  KUKKIWON_CERT
+  BELT_CERT
+  MEDICAL_CERT
+  COACH_CERT
+  REFEREE_CERT
+}
+
+enum DocumentStatus {
+  UPLOADED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model Document {
+  id              String         @id @default(cuid())
+  memberId        String         @map("member_id")
+  type            DocumentType
+  fileName        String         @map("file_name")
+  fileUrl         String         @map("file_url")
+  fileSize        Int            @map("file_size")
+  mimeType        String         @map("mime_type")
+  status          DocumentStatus @default(UPLOADED)
+  reviewedById    String?        @map("reviewed_by_id")
+  reviewedAt      DateTime?      @map("reviewed_at")
+  rejectionReason String?        @map("rejection_reason")
+  expiresAt       DateTime?      @map("expires_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  member          Member         @relation(fields: [memberId], references: [id])
+  reviewedBy      User?          @relation("DocumentReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([memberId])
+  @@index([status])
+  @@map("documents")
+}
+
+// ============================================================
+// COMPETITIONS
+// ============================================================
+
+enum CompetitionType {
+  CHAMPIONSHIP
+  CUP
+  OPEN
+  QUALIFIER
+  INTERNATIONAL
+}
+
+enum CompetitionStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AgeGroup {
+  CHILDREN
+  CADETS
+  JUNIORS
+  SENIORS
+  VETERANS
+}
+
+enum BracketType {
+  SINGLE_ELIMINATION
+  REPECHAGE
+  ROUND_ROBIN
+}
+
+model Competition {
+  id                    String            @id @default(cuid())
+  name                  String
+  type                  CompetitionType
+  isRanked              Boolean           @default(true) @map("is_ranked")
+  startDate             DateTime          @map("start_date")
+  endDate               DateTime          @map("end_date")
+  registrationDeadline  DateTime          @map("registration_deadline")
+  venueCity             String            @map("venue_city")
+  venueAddress          String?           @map("venue_address")
+  venueName             String?           @map("venue_name")
+  status                CompetitionStatus @default(DRAFT)
+  rulesDescription      String?           @map("rules_description")
+  maxPerRegion          Int?              @map("max_per_region")
+  createdById           String            @map("created_by_id")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  categories            CompetitionCategory[]
+  medalResults          MedalResult[]
+
+  @@index([status])
+  @@index([startDate])
+  @@map("competitions")
+}
+
+model CompetitionCategory {
+  id              String      @id @default(cuid())
+  competitionId   String      @map("competition_id")
+  ageGroup        AgeGroup    @map("age_group")
+  gender          Gender
+  weightMin       Decimal     @map("weight_min") @db.Decimal(5, 2)
+  weightMax       Decimal     @map("weight_max") @db.Decimal(5, 2)
+  minBelt         BeltRank    @default(GYP_10) @map("min_belt")
+  bracketType     BracketType @default(SINGLE_ELIMINATION) @map("bracket_type")
+  displayName     String?     @map("display_name")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  competition     Competition    @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  registrations   Registration[]
+  matches         Match[]
+  medalResults    MedalResult[]
+
+  @@unique([competitionId, ageGroup, gender, weightMin, weightMax])
+  @@map("competition_categories")
+}
+
+// ============================================================
+// REGISTRATIONS
+// ============================================================
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+model Registration {
+  id              String             @id @default(cuid())
+  memberId        String             @map("member_id")
+  categoryId      String             @map("category_id")
+  weighInWeight   Decimal?           @map("weigh_in_weight") @db.Decimal(5, 2)
+  status          RegistrationStatus @default(PENDING)
+  submittedById   String             @map("submitted_by_id")
+  approvedById    String?            @map("approved_by_id")
+  rejectionReason String?            @map("rejection_reason")
+  submittedAt     DateTime           @default(now()) @map("submitted_at")
+  decidedAt       DateTime?          @map("decided_at")
+
+  member          Member             @relation(fields: [memberId], references: [id])
+  category        CompetitionCategory @relation(fields: [categoryId], references: [id])
+  submittedBy     User               @relation("RegistrationSubmittedBy", fields: [submittedById], references: [id])
+  approvedBy      User?              @relation("RegistrationApprovedBy", fields: [approvedById], references: [id])
+
+  @@unique([memberId, categoryId])
+  @@index([categoryId])
+  @@index([status])
+  @@map("registrations")
+}
+
+// ============================================================
+// MATCHES (BRACKET)
+// ============================================================
+
+enum WinMethod {
+  POINTS
+  KO
+  TKO
+  DSQ
+  WO
+  RSC
+}
+
+enum MatchStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Match {
+  id              String      @id @default(cuid())
+  categoryId      String      @map("category_id")
+  roundNumber     Int         @map("round_number")
+  position        Int
+  athleteRedId    String?     @map("athlete_red_id")
+  athleteBlueId   String?     @map("athlete_blue_id")
+  winnerId        String?     @map("winner_id")
+  scoreRed        String?     @map("score_red")
+  scoreBlue       String?     @map("score_blue")
+  winMethod       WinMethod?  @map("win_method")
+  judgeNotes      String?     @map("judge_notes")
+  isBye           Boolean     @default(false) @map("is_bye")
+  nextMatchId     String?     @map("next_match_id")
+  nextSlot        String?     @map("next_slot")
+  status          MatchStatus @default(SCHEDULED)
+  scheduledTime   DateTime?   @map("scheduled_time")
+  matNumber       Int?        @map("mat_number")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  category        CompetitionCategory @relation(fields: [categoryId], references: [id])
+  athleteRed      Member?     @relation("MatchAthleteRed", fields: [athleteRedId], references: [id])
+  athleteBlue     Member?     @relation("MatchAthleteBlue", fields: [athleteBlueId], references: [id])
+  winner          Member?     @relation("MatchWinner", fields: [winnerId], references: [id])
+  nextMatch       Match?      @relation("MatchProgression", fields: [nextMatchId], references: [id])
+  previousMatches Match[]     @relation("MatchProgression")
+
+  @@index([categoryId])
+  @@map("matches")
+}
+
+// ============================================================
+// RANKINGS & RESULTS
+// ============================================================
+
+model RankingConfig {
+  id              String          @id @default(cuid())
+  competitionType CompetitionType @map("competition_type")
+  place1Points    Int             @map("place_1_points")
+  place2Points    Int             @map("place_2_points")
+  place3Points    Int             @map("place_3_points")
+  place5Points    Int             @default(0) @map("place_5_points")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@unique([competitionType])
+  @@map("ranking_configs")
+}
+
+model MedalResult {
+  id                  String  @id @default(cuid())
+  competitionId       String  @map("competition_id")
+  categoryId          String  @map("category_id")
+  memberId            String  @map("member_id")
+  place               Int
+  ratingPointsEarned  Int     @default(0) @map("rating_points_earned")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  competition       Competition         @relation(fields: [competitionId], references: [id])
+  category          CompetitionCategory  @relation(fields: [categoryId], references: [id])
+  member            Member              @relation(fields: [memberId], references: [id])
+
+  @@unique([competitionId, categoryId, memberId])
+  @@index([memberId])
+  @@map("medal_results")
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  details     Json?
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
