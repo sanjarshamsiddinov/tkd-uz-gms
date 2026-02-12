@@ -112,13 +112,13 @@ export function Sidebar({ user }: SidebarProps) {
       <Link
         href={item.href}
         className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
           active
             ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-sm"
             : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         )}
       >
-        <Icon className={cn("h-4.5 w-4.5 shrink-0", collapsed && "h-5 w-5")} />
+        <Icon className={cn("h-4 w-4 shrink-0", collapsed && "h-5 w-5")} />
         {!collapsed && (
           <>
             <span className="truncate">{item.label}</span>
@@ -156,9 +156,9 @@ export function Sidebar({ user }: SidebarProps) {
     title: string
     items: NavItem[]
   }) => (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       {!collapsed && (
-        <div className="px-3 py-2">
+        <div className="px-3 py-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
             {title}
           </span>
@@ -198,8 +198,8 @@ export function Sidebar({ user }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-6">
+      <ScrollArea className="flex-1 px-3 py-3">
+        <nav className="space-y-4">
           <NavSection title="Основное" items={mainNav} />
           <Separator className="bg-sidebar-border" />
           <NavSection title="Организации" items={orgNav} />
@@ -209,28 +209,28 @@ export function Sidebar({ user }: SidebarProps) {
       </ScrollArea>
 
       {/* User section - always pinned at bottom */}
-      <div className="shrink-0 border-t border-sidebar-border px-3 py-3 space-y-1.5">
+      <div className="shrink-0 border-t border-sidebar-border px-3 py-2 space-y-1">
         {/* Profile link */}
         <Link
           href="/profile"
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200",
+            "flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200",
             isActive("/profile")
               ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-sm"
               : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           )}
         >
-          <Avatar className="h-8 w-8 shrink-0">
-            <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs font-medium">
+          <Avatar className="h-7 w-7 shrink-0">
+            <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-[10px] font-medium">
               {getInitials(user.fullName)}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate">
+              <p className="text-sm font-medium truncate leading-tight">
                 {user.fullName}
               </p>
-              <p className="text-[10px] opacity-60">
+              <p className="text-[10px] opacity-60 leading-tight">
                 {roleLabels[user.role] || user.role}
               </p>
             </div>
@@ -241,11 +241,11 @@ export function Sidebar({ user }: SidebarProps) {
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           className={cn(
-            "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-tkd-red-400 hover:bg-tkd-red-500/10 transition-all duration-200",
+            "w-full flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm text-tkd-red-400 hover:bg-tkd-red-500/10 transition-all duration-200",
             collapsed && "justify-center"
           )}
         >
-          <LogOut className="h-4.5 w-4.5 shrink-0" />
+          <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span>Выйти из системы</span>}
         </button>
       </div>
