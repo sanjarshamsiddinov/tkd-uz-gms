@@ -208,66 +208,24 @@ export function Sidebar({ user }: SidebarProps) {
         </nav>
       </ScrollArea>
 
-      {/* Collapse button */}
-      <div className="px-3 py-2 border-t border-sidebar-border">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent transition-colors"
-        >
-          <ChevronLeft
-            className={cn(
-              "h-4 w-4 transition-transform duration-200",
-              collapsed && "rotate-180"
-            )}
-          />
-          {!collapsed && <span>Свернуть</span>}
-        </button>
-      </div>
-
-      {/* User section */}
-      <div className={cn(
-        "border-t border-sidebar-border px-3 py-3 space-y-2",
-        collapsed ? "flex flex-col items-center" : ""
-      )}>
+      {/* User section - always pinned at bottom */}
+      <div className="shrink-0 border-t border-sidebar-border px-3 py-3 space-y-1.5">
         {/* Profile link */}
-        {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href="/profile"
-                className={cn(
-                  "flex items-center justify-center rounded-lg p-2.5 transition-all duration-200",
-                  isActive("/profile")
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                )}
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs font-medium">
-                    {getInitials(user.fullName)}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="font-medium">
-              Личный кабинет
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <Link
-            href="/profile"
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200",
-              isActive("/profile")
-                ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-sm"
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            )}
-          >
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs font-medium">
-                {getInitials(user.fullName)}
-              </AvatarFallback>
-            </Avatar>
+        <Link
+          href="/profile"
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200",
+            isActive("/profile")
+              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-sm"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          )}
+        >
+          <Avatar className="h-8 w-8 shrink-0">
+            <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs font-medium">
+              {getInitials(user.fullName)}
+            </AvatarFallback>
+          </Avatar>
+          {!collapsed && (
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">
                 {user.fullName}
@@ -276,33 +234,20 @@ export function Sidebar({ user }: SidebarProps) {
                 {roleLabels[user.role] || user.role}
               </p>
             </div>
-          </Link>
-        )}
+          )}
+        </Link>
 
         {/* Logout button */}
-        {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => signOut({ callbackUrl: "/login" })}
-                className="flex items-center justify-center rounded-lg p-2.5 text-sidebar-foreground/50 hover:bg-tkd-red-500/10 hover:text-tkd-red-400 transition-all duration-200"
-              >
-                <LogOut className="h-4.5 w-4.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="font-medium">
-              Выйти из системы
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-tkd-red-400 hover:bg-tkd-red-500/10 transition-all duration-200"
-          >
-            <LogOut className="h-4.5 w-4.5 shrink-0" />
-            <span>Выйти из системы</span>
-          </button>
-        )}
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className={cn(
+            "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-tkd-red-400 hover:bg-tkd-red-500/10 transition-all duration-200",
+            collapsed && "justify-center"
+          )}
+        >
+          <LogOut className="h-4.5 w-4.5 shrink-0" />
+          {!collapsed && <span>Выйти из системы</span>}
+        </button>
       </div>
     </aside>
   )
