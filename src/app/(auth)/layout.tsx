@@ -45,7 +45,7 @@ export default function AuthLayout({
           {/* Stats row */}
           <div className="mt-16 flex gap-12">
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">14</div>
+              <div className="text-3xl font-bold text-white">12</div>
               <div className="text-xs text-navy-400 mt-1">Областей</div>
             </div>
             <div className="text-center">
