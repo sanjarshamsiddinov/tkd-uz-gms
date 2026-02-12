@@ -17,6 +17,7 @@ import {
   History,
   ChevronLeft,
   LogOut,
+  UserCircle,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -225,42 +226,83 @@ export function Sidebar({ user }: SidebarProps) {
 
       {/* User section */}
       <div className={cn(
-        "border-t border-sidebar-border px-3 py-3",
-        collapsed ? "flex justify-center" : ""
+        "border-t border-sidebar-border px-3 py-3 space-y-2",
+        collapsed ? "flex flex-col items-center" : ""
       )}>
-        <div className={cn(
-          "flex items-center gap-3",
-          collapsed && "flex-col"
-        )}>
-          <Avatar className="h-9 w-9 shrink-0">
-            <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs font-medium">
-              {getInitials(user.fullName)}
-            </AvatarFallback>
-          </Avatar>
-          {!collapsed && (
+        {/* Profile link */}
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/profile"
+                className={cn(
+                  "flex items-center justify-center rounded-lg p-2.5 transition-all duration-200",
+                  isActive("/profile")
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs font-medium">
+                    {getInitials(user.fullName)}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-medium">
+              Личный кабинет
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Link
+            href="/profile"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200",
+              isActive("/profile")
+                ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-sm"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            )}
+          >
+            <Avatar className="h-8 w-8 shrink-0">
+              <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs font-medium">
+                {getInitials(user.fullName)}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
+              <p className="text-sm font-medium truncate">
                 {user.fullName}
               </p>
-              <p className="text-[10px] text-sidebar-foreground/50">
+              <p className="text-[10px] opacity-60">
                 {roleLabels[user.role] || user.role}
               </p>
             </div>
-          )}
-          {!collapsed && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => signOut({ callbackUrl: "/login" })}
-                  className="text-sidebar-foreground/40 hover:text-tkd-red-400 transition-colors shrink-0"
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Выйти</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
+          </Link>
+        )}
+
+        {/* Logout button */}
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="flex items-center justify-center rounded-lg p-2.5 text-sidebar-foreground/50 hover:bg-tkd-red-500/10 hover:text-tkd-red-400 transition-all duration-200"
+              >
+                <LogOut className="h-4.5 w-4.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-medium">
+              Выйти из системы
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-tkd-red-400 hover:bg-tkd-red-500/10 transition-all duration-200"
+          >
+            <LogOut className="h-4.5 w-4.5 shrink-0" />
+            <span>Выйти из системы</span>
+          </button>
+        )}
       </div>
     </aside>
   )
