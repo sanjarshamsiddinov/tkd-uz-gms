@@ -1,20 +1,10 @@
-import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import { getToken } from "next-auth/jwt"
 
-const publicPaths = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/api/auth",
-]
+const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth"]
 
-const publicPagePaths = [
-  "/rankings",
-  "/events",
-  "/athletes",
-]
-
-export default auth((req) => {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // Allow public paths
@@ -22,32 +12,21 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
-  // Allow public page paths at root level (public portal)
-  if (pathname === "/" && !req.auth) {
-    // Redirect unauthenticated users at root to login
-    return NextResponse.redirect(new URL("/login", req.url))
-  }
-
-  // Allow public pages
-  if (publicPagePaths.some((p) => pathname.startsWith(p)) && pathname.startsWith("/")) {
-    return NextResponse.next()
-  }
+  // Check for JWT token (lightweight, no Prisma)
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
 
   // Redirect to login if not authenticated
-  if (!req.auth) {
-    return NextResponse.redirect(new URL("/login", req.url))
-  }
-
-  // Redirect authenticated users away from auth pages
-  if (pathname.startsWith("/login") || pathname.startsWith("/register")) {
-    return NextResponse.redirect(new URL("/", req.url))
+  if (!token) {
+    const loginUrl = new URL("/login", req.url)
+    loginUrl.searchParams.set("callbackUrl", pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
   return NextResponse.next()
-})
+}
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|logo.svg|og-image.png|api/auth).*)",
+    "/((?!_next/static|_next/image|favicon.ico|logo.svg|og-image.png).*)",
   ],
 }
