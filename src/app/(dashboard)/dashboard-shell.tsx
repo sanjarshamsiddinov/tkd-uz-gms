@@ -29,7 +29,7 @@ export function DashboardShell({ children, user }: DashboardShellProps) {
 
       {/* Main content */}
       <div className="lg:pl-64 transition-all duration-200">
-        <Topbar onMobileMenuToggle={() => setMobileOpen(true)} />
+        <Topbar onMobileMenuToggle={() => setMobileOpen(true)} user={user} />
 
         <main className="px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl animate-fade-in">

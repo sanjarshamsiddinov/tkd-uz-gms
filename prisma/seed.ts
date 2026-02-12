@@ -4,7 +4,6 @@ import { hash } from 'bcryptjs'
 const prisma = new PrismaClient()
 
 const regions = [
-  { name: 'город Ташкент', code: 'TAS' },
   { name: 'Ташкентская область', code: 'TASO' },
   { name: 'Самаркандская область', code: 'SAM' },
   { name: 'Бухарская область', code: 'BUX' },
@@ -17,7 +16,6 @@ const regions = [
   { name: 'Навоийская область', code: 'NAV' },
   { name: 'Джизакская область', code: 'JIZ' },
   { name: 'Сырдарьинская область', code: 'SIR' },
-  { name: 'Каракалпакстан', code: 'KAR' },
 ]
 
 const rankingConfigs = [
